@@ -1,5 +1,5 @@
 YHDE add-on for Godot
-Copyright (c) 2026 Vihta Games
+Copyright (c) 2026 YHDE Development Organization
 
 The scripts and configuration files in this folder are licensed under the
 MIT License below. The compiled libraries in bin/ are not: they are covered

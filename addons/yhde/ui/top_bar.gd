@@ -17,6 +17,7 @@ var _avatars: HBoxContainer
 var _comment: Button
 var _status: Button
 var _state := Style.STATE_OFFLINE
+var _state_text := "Offline"
 
 
 func _init() -> void:
@@ -39,22 +40,32 @@ func _init() -> void:
 	_comment.visible = false
 	add_child(_comment)
 
-	# Hidden while live: being connected is the normal case and needs no label.
+	# The YHDE mark opens the panel. The connection state is written next to
+	# it only when something is not right: being connected needs no label.
 	_status = Button.new()
+	_status.icon = Style.logo()
 	Style.quiet_button(_status)
+	Style.untinted_icon(_status)
 	_status.add_theme_font_size_override("font_size", Style.small_size())
 	_status.pressed.connect(func() -> void: status_pressed.emit())
 	add_child(_status)
 	set_status(Style.STATE_OFFLINE, "Offline")
 
 
+func _notification(what: int) -> void:
+	# The logo's ring and the state color follow the editor theme.
+	if what == NOTIFICATION_THEME_CHANGED and _status:
+		_status.icon = Style.logo()
+		set_status(_state, _state_text)
+
+
 func set_status(state: int, text: String) -> void:
 	_state = state
+	_state_text = text
 	var live := state == Style.STATE_LIVE
-	_status.visible = not live
 	_comment.visible = live
-	_status.text = "YHDE: " + (text if state != Style.STATE_OFFLINE else "offline")
-	_status.tooltip_text = "Open the YHDE panel"
+	_status.text = "" if live else (text if state != Style.STATE_OFFLINE else "Offline")
+	_status.tooltip_text = "YHDE: %s. Open the YHDE panel" % ("connected" if live else _status.text.to_lower())
 	_status.add_theme_color_override("font_color", Style.state_color(state) if state != Style.STATE_OFFLINE else Style.muted())
 
 

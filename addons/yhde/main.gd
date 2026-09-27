@@ -97,6 +97,12 @@ func enter() -> void:
 	panel = DockPanel.new()
 	dock = EditorDock.new()
 	dock.title = "YHDE"
+	dock.dock_icon = Style.logo()
+	dock.force_show_icon = true
+	dock.theme_changed.connect(func() -> void:
+		var logo := Style.logo()
+		if dock.dock_icon != logo:
+			dock.dock_icon = logo)
 	dock.layout_key = "yhde"
 	dock.default_slot = EditorDock.DOCK_SLOT_RIGHT_UL
 	dock.add_child(panel)
@@ -333,7 +339,7 @@ func _load_settings() -> Dictionary:
 
 ## A starter project from the server's join page carries the server address
 ## and invite code in addons/yhde/join.cfg: store them (the code outside the
-## project, like one typed in), delete the file and ask for a name.
+## project, like a sign-in), delete the file and offer to join.
 func _take_join_file() -> void:
 	if not FileAccess.file_exists(JOIN_FILE):
 		return

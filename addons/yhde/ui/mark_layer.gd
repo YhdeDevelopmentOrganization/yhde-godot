@@ -55,14 +55,8 @@ func _avatar(at: Vector2, d: float, p: Dictionary) -> void:
 	if d >= Style.px(14):
 		var f := Style.font(true)
 		var fs := int(maxf(7.0, d * 0.42))
-		var text: String = p.initials
+		# While they type, the avatar says so instead of showing initials.
+		var text: String = "..." if p.get("typing", false) else p.initials
 		var w := f.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 		draw_string(f, Vector2(c.x - w * 0.5, c.y + (f.get_ascent(fs) - f.get_descent(fs)) * 0.5), text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Style.text_on(p.color))
-	if p.get("typing", false):
-		# A small pulsing dot: they are typing right now.
-		var pulse := 0.5 + 0.5 * sin(Time.get_ticks_msec() / 180.0)
-		var dot := Style.color("accent_color")
-		dot.a = 0.5 + 0.5 * pulse
-		draw_circle(at + Vector2(d, d) - Vector2(2, 2), Style.px(3), dot, true, -1.0, true)
-		queue_redraw()

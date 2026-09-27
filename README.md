@@ -1,3 +1,5 @@
+<img src="icon.png" alt="YHDE logo" width="96">
+
 # YHDE for Godot
 
 Real-time collaboration for the Godot editor. Your whole team works in the same project at the same time: scene edits, properties, scripts and files show up for everyone as they happen, with live cursors and no merge conflicts.
@@ -21,7 +23,7 @@ Website and docs: https://yhde.frostinteractive.fi
 
 ## Install
 
-1. Copy the `addons/yhde` folder into your project's `addons` folder.
+1. In Godot, open the **AssetLib** tab, press **Import...** and pick the downloaded zip, then **Install**. (Or copy the `addons/yhde` folder into your project's `addons` folder.)
 2. In Godot, open **Project > Project Settings > Plugins** and enable **YHDE**.
 3. Open the YHDE dock, sign in, and pick or create a project.
 

@@ -112,8 +112,8 @@ var _members: VBoxContainer
 var _invite_row: HBoxContainer
 var _invite_email: LineEdit
 var _pending: VBoxContainer
-# The project and branch this folder belongs to. Not shown: an invite code
-# decides the project, and the folder remembers it after the first connection.
+# The project and branch this folder belongs to. Not shown: the folder
+# remembers them after its first connection.
 var _project_id := ""
 var _branch_id := ""
 var _scripts_check: CheckBox

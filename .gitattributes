@@ -5,5 +5,6 @@
 
 # Only the add-on itself is included in Asset Library downloads.
 /README.md export-ignore
+/icon.png export-ignore
 /.gitignore export-ignore
 /.gitattributes export-ignore

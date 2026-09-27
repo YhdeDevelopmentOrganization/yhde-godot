@@ -1,5 +1,5 @@
 YHDE Native Library License
-Copyright (c) 2026 Vihta Games. All rights reserved.
+Copyright (c) 2026 YHDE Development Organization. All rights reserved.
 
 This license covers the compiled libraries in this folder (files named
 libyhde.*). It does not cover the rest of the YHDE add-on, which is licensed
@@ -10,7 +10,7 @@ under the MIT License (see ../LICENSE.txt).
    You may install, copy and use the libraries, free of charge, only:
    - unmodified,
    - as part of the YHDE add-on for Godot, and
-   - to connect to YHDE services operated by Vihta Games.
+   - to connect to YHDE services operated by YHDE Development Organization.
 
    You may include the libraries in your own project or repository, and share
    them with the people you work with, as long as they stay unmodified, stay
@@ -24,12 +24,12 @@ under the MIT License (see ../LICENSE.txt).
    - reverse engineer, decompile or disassemble them, except where applicable
      law allows it despite this restriction;
    - use them to connect to any server or service other than one operated by
-     Vihta Games;
+     YHDE Development Organization;
    - sell, rent or distribute them on their own, apart from the YHDE add-on.
 
 3. Ownership
 
-   The libraries are licensed, not sold. Vihta Games keeps all rights not
+   The libraries are licensed, not sold. YHDE Development Organization keeps all rights not
    expressly granted in this license.
 
 4. The YHDE service
@@ -42,7 +42,7 @@ under the MIT License (see ../LICENSE.txt).
    THE LIBRARIES ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. TO THE EXTENT ALLOWED
-   BY LAW, VIHTA GAMES IS NOT LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+   BY LAW, YHDE DEVELOPMENT ORGANIZATION IS NOT LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
    ARISING FROM THE LIBRARIES OR THEIR USE.
 
 6. Termination

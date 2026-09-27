@@ -50,6 +50,30 @@ const _SVG := {
 }
 static var _svg_cache := {}
 
+# The YHDE mark in its own colors, never tinted: the ring is off-white on
+# dark editor themes and near-black on light ones so it stays visible.
+const _LOGO := "<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='2.7 -0.8 62.6 62.6'><defs><mask id='cut-under-green' maskUnits='userSpaceOnUse' x='2.7' y='-0.8' width='62.6' height='62.6'><rect x='2.7' y='-0.8' width='62.6' height='62.6' fill='#fff'/><path d='M28.5 36v19.55l5.175-4.83 3.565 7.82 3.45-1.495-3.45-7.705h6.785Z' fill='none' stroke='#000' stroke-width='4.2' stroke-linejoin='round'/><path d='M58.223 27.006a27 8.5-20 0 1-45.989 16.738' fill='none' stroke='#000' stroke-width='7.5' stroke-linejoin='round'/><path d='M58 25V5.45l-5.175 4.83-3.565-7.82-3.45 1.495 3.45 7.705h-6.785Z' fill='none' stroke='#000' stroke-width='4.2' stroke-linejoin='round'/></mask><mask id='cut-green' maskUnits='userSpaceOnUse' x='2.7' y='-0.8' width='62.6' height='62.6'><rect x='2.7' y='-0.8' width='62.6' height='62.6' fill='#fff'/><path d='M58.223 27.006a27 8.5-20 0 1-45.989 16.738' fill='none' stroke='#000' stroke-width='7.5' stroke-linejoin='round'/><path d='M58 25V5.45l-5.175 4.83-3.565-7.82-3.45 1.495 3.45 7.705h-6.785Z' fill='none' stroke='#000' stroke-width='4.2' stroke-linejoin='round'/></mask><mask id='cut-front' maskUnits='userSpaceOnUse' x='2.7' y='-0.8' width='62.6' height='62.6'><rect x='2.7' y='-0.8' width='62.6' height='62.6' fill='#fff'/><path d='M58 25V5.45l-5.175 4.83-3.565-7.82-3.45 1.495 3.45 7.705h-6.785Z' fill='none' stroke='#000' stroke-width='4.2' stroke-linejoin='round'/></mask></defs><g id='Behind-green' mask='url(#cut-under-green)'><path id='Ring-back' d='M8.628 41.234a27 8.5-20 0 1 50.744-18.469' fill='none' stroke='RING' stroke-width='3.5' stroke-linecap='round'/><circle id='Planet' cx='34' cy='32' r='14' fill='#7cc4ff'/></g><path id='Cursor-green' mask='url(#cut-green)' d='M28.5 36v19.55l5.175-4.83 3.565 7.82 3.45-1.495-3.45-7.705h6.785Z' fill='#5ee6a8' stroke='#5ee6a8' stroke-width='1.5' stroke-linejoin='round'/><path id='Ring-front' mask='url(#cut-front)' d='M59.372 22.765a27 8.5-20 0 1-50.744 18.47' fill='none' stroke='RING' stroke-width='3.5' stroke-linecap='round'/><path id='Cursor-coral' d='M58 25V5.45l-5.175 4.83-3.565-7.82-3.45 1.495 3.45 7.705h-6.785Z' fill='#ff8a65' stroke='#ff8a65' stroke-width='1.5' stroke-linejoin='round'/></svg>"
+
+
+static func logo() -> Texture2D:
+	var dark := color("base_color").get_luminance() < 0.5
+	var ring := "#f4f2ec" if dark else "#131315"
+	var key := "logo%s@%.2f" % [ring, ui_scale()]
+	if _svg_cache.has(key):
+		return _svg_cache[key]
+	var img := Image.new()
+	if img.load_svg_from_string(_LOGO.replace("RING", ring), ui_scale()) != OK:
+		return null
+	var tex := ImageTexture.create_from_image(img)
+	_svg_cache[key] = tex
+	return tex
+
+
+## Shows a button's icon as drawn, without the theme's icon tint.
+static func untinted_icon(button: Button) -> void:
+	for state in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+		button.add_theme_color_override("icon_%s_color" % state, Color.WHITE)
+
 
 static func icon(name: String) -> Texture2D:
 	if _SVG.has(name):

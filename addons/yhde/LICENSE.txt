@@ -1,6 +1,9 @@
-MIT License
-
+YHDE add-on for Godot
 Copyright (c) 2026 Vihta Games
+
+The scripts and configuration files in this folder are licensed under the
+MIT License below. The compiled libraries in bin/ are not: they are covered
+by bin/LICENSE.txt. Third-party notices are in THIRD_PARTY_NOTICES.txt.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

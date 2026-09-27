@@ -1,0 +1,8 @@
+# Godot
+.godot/
+
+# Created by the add-on at runtime
+addons/yhde/join.cfg
+addons/yhde/bin/~*
+*.tmp
+*.old

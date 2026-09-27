@@ -18,8 +18,8 @@ signal site_requested(path: String)
 signal invite_connect_requested
 signal project_create_requested(project_name: String)
 signal project_link_requested(project_id: String)
-signal invite_requested(email: String)
-signal invite_cancel_requested(invite_id: String)
+signal invite_requested(project_id: String, email: String)
+signal invite_cancel_requested(project_id: String, invite_id: String)
 signal disconnect_requested
 signal follow_requested(peer_id: String)
 signal summon_requested
@@ -99,7 +99,9 @@ var _account_line: Label
 var _account := {}
 var _projects: Array = []
 var _folder_project := ""
-var _owner := false
+var _owner := false # can make projects (a beta access code)
+var _dashboard := {}
+var _storage_note: Label # warns before the owner's storage runs out
 var _new_button: Button
 var _new_row: HBoxContainer
 var _new_name: LineEdit
@@ -464,11 +466,12 @@ func _build_signin() -> PanelContainer:
 	_new_row.add_child(close)
 	_signed_in.add_child(_new_row)
 
-	# The team: who is in it, seats, invitations.
+	# The people in the project this folder is connected to; its owner
+	# invites more here.
 	_team_box = VBoxContainer.new()
 	_team_box.add_theme_constant_override("separation", int(Style.px(4)))
 	_team_box.add_child(Style.hairline())
-	_team_title = Style.label("Team")
+	_team_title = Style.label("People")
 	_team_title.add_theme_font_override("font", Style.font(true))
 	_team_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_team_box.add_child(_team_title)
@@ -497,6 +500,10 @@ func _build_signin() -> PanelContainer:
 	_pending.add_theme_constant_override("separation", int(Style.px(2)))
 	_team_box.add_child(_pending)
 	_signed_in.add_child(_team_box)
+	_storage_note = Style.label("", false, Style.small_size())
+	_storage_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_storage_note.visible = false
+	_signed_in.add_child(_storage_note)
 	_account_line = Style.label("", true, Style.small_size())
 	_account_line.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_signed_in.add_child(_account_line)
@@ -582,8 +589,8 @@ func _project_card(p: Dictionary) -> Control:
 	menu.flat = true
 	menu.tooltip_text = "More"
 	var items := menu.get_popup()
-	if _owner:
-		items.add_item("Copy an invite link", 0)
+	if str(p.get("role", "owner")) == "owner":
+		items.add_item("Copy a view link", 0)
 	items.add_item("Open on the website", 1)
 	items.id_pressed.connect(func(id: int) -> void:
 		if id == 0:
@@ -803,6 +810,8 @@ func show_resolved() -> bool:
 func set_settings(settings: Dictionary) -> void:
 	_project_id = settings.get("project_id", "")
 	_branch_id = settings.get("branch_id", "")
+	_fill_team(_dashboard)
+	_fill_storage()
 	_scripts_check.set_pressed_no_signal(settings.get("allow_builtin_scripts", false))
 	_refresh_you_preview()
 
@@ -812,9 +821,12 @@ func set_account(account: Dictionary, team, projects: Array, folder_project: Str
 	_account = account
 	_projects = projects
 	_folder_project = folder_project
-	# The owner and team admins manage projects and people.
-	_owner = team is Dictionary and str(team.get("role", "")) in ["owner", "admin"]
+	# Someone with a beta access code makes projects; each project's owner
+	# decides who is in it.
+	_owner = team is Dictionary
+	_dashboard = dashboard
 	_fill_team(dashboard)
+	_fill_storage()
 	var signed_in := not account.is_empty() and account.has("name")
 	_signed_out.visible = not signed_in
 	_signed_in.visible = signed_in
@@ -823,41 +835,77 @@ func set_account(account: Dictionary, team, projects: Array, folder_project: Str
 	_grid_action.visible = false
 	_grid_empty.visible = false
 	if signed_in:
-		_account_line.text = "%s%s" % [account.get("name", ""), (" · " + str(team.get("name", ""))) if team is Dictionary else ""]
-		_projects_title.text = "%s's projects" % team.get("name", "") if team is Dictionary else "Your projects"
+		_account_line.text = str(account.get("name", ""))
+		_projects_title.text = "Your projects"
 		var live: Array = projects.filter(func(p) -> bool: return not p.get("archived", false))
 		for p in live:
 			_grid.add_child(_project_card(p))
 		if not loaded:
 			_grid_empty.text = "Loading your projects…"
 			_grid_empty.visible = true
-		elif not (team is Dictionary):
-			_grid_empty.text = "You're not in a team yet. Make your team on the website, or join the one you were invited to."
+		elif live.is_empty() and not _owner:
+			_grid_empty.text = "No projects yet. When someone invites you into their project, it shows up here. To make your own, enter a beta access code on the website."
 			_grid_empty.visible = true
 			_show_action("Open the website", "/app#/projects")
 		elif live.is_empty():
-			_grid_empty.text = "No projects yet. Make one from this folder below, or on the website." if _owner else "No projects yet. When your team's owner makes one, it shows up here."
+			_grid_empty.text = "No projects yet. Make one from this folder below, or on the website."
 			_grid_empty.visible = true
 	_refresh_you_preview()
 
 
+# The project this folder is connected to (or belongs to).
+func _current_project() -> String:
+	return _project_id if _project_id != "" else _folder_project
+
+
+# Before an upload is refused: the project owner's storage from 80 % on.
+func _fill_storage() -> void:
+	if _storage_note == null:
+		return
+	_storage_note.visible = false
+	var pid := _current_project()
+	for p in _projects:
+		if str(p.get("id", "")) != pid:
+			continue
+		var used := float(p.get("storageUsed", 0))
+		var limit := float(p.get("storageLimit", 0))
+		if limit <= 0.0 or used < limit * 0.8:
+			return
+		var whose: String = "Your" if str(p.get("role", "owner")) == "owner" else "%s's" % str(p.get("owner", "The owner"))
+		if used >= limit:
+			_storage_note.text = "%s storage is full: new files you add won't reach the others. Free space on the YHDE website." % whose
+			_storage_note.add_theme_color_override("font_color", Style.state_color(Style.STATE_OFFLINE))
+		else:
+			_storage_note.text = "%s storage is %d %% used. When it's full, new files you add won't reach the others." % [whose, int(round(used / limit * 100.0))]
+			_storage_note.add_theme_color_override("font_color", Style.state_color(Style.STATE_RECONNECTING))
+		_storage_note.visible = true
+		return
+
+
 func _fill_team(d: Dictionary) -> void:
+	if _members == null:
+		return
 	for c in _members.get_children() + _pending.get_children():
 		c.queue_free()
-	var team = d.get("team")
-	_team_box.visible = team is Dictionary
 	_new_button.visible = _owner and not _new_row.visible
-	_invite_row.visible = _owner
-	if not (team is Dictionary):
+	var project := {}
+	var pid := _current_project()
+	for p in d.get("projects", []):
+		if str(p.get("id", "")) == pid:
+			project = p
+	_team_box.visible = not project.is_empty()
+	var owns: bool = str(project.get("role", "")) == "owner"
+	_invite_row.visible = owns and not project.get("archived", false)
+	if project.is_empty():
 		return
-	var members: Array = d.get("members", [])
-	var invites: Array = d.get("invites", [])
+	var members: Array = project.get("members", [])
+	var invites: Array = (project.get("invites", []) as Array).filter(func(i) -> bool: return not i.get("expired", false))
 	var online := {}
 	for p in d.get("presence", []):
 		online[str(p.get("name", ""))] = true
-	var plan := str(team.get("plan", "")).capitalize()
-	_team_title.text = str(team.get("name", "Team"))
-	_team_sub.text = "%s plan · %d %s%s" % [plan, members.size(), "person" if members.size() == 1 else "people", (" · %d invited" % invites.size()) if not invites.is_empty() else ""]
+	var others := members.size() - 1 + invites.size()
+	_team_title.text = "People in %s" % str(project.get("name", "this project"))
+	_team_sub.text = "%d of %d invited" % [others, int(project.get("peopleLimit", 0))] if owns else "%s decides who is in it" % str((project.get("owner", {}) as Dictionary).get("name", "The owner"))
 	for m in members:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", int(Style.px(6)))
@@ -869,8 +917,10 @@ func _fill_team(d: Dictionary) -> void:
 			var here := Style.label("here", false, Style.small_size())
 			here.add_theme_color_override("font_color", Style.state_color(Style.STATE_LIVE))
 			row.add_child(here)
-		if str(m.get("role", "")) in ["owner", "admin"]:
-			row.add_child(Style.label(str(m.get("role", "")), true, Style.small_size()))
+		if str(m.get("role", "")) == "owner":
+			row.add_child(Style.label("owner", true, Style.small_size()))
+		elif str(m.get("access", "edit")) == "view":
+			row.add_child(Style.label("views", true, Style.small_size()))
 		_members.add_child(row)
 	for i in invites:
 		var row := HBoxContainer.new()
@@ -878,13 +928,13 @@ func _fill_team(d: Dictionary) -> void:
 		who.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		who.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		row.add_child(who)
-		if _owner:
-			var cancel := Button.new()
-			cancel.text = "Cancel"
-			Style.quiet_button(cancel)
+		if owns:
+			var withdraw := Button.new()
+			withdraw.text = "Withdraw"
+			Style.quiet_button(withdraw)
 			var id := str(i.get("id", ""))
-			cancel.pressed.connect(func() -> void: invite_cancel_requested.emit(id))
-			row.add_child(cancel)
+			withdraw.pressed.connect(func() -> void: invite_cancel_requested.emit(pid, id))
+			row.add_child(withdraw)
 		_pending.add_child(row)
 
 
@@ -901,7 +951,7 @@ func _submit_invite() -> void:
 	if e == "":
 		return
 	_invite_email.text = ""
-	invite_requested.emit(e)
+	invite_requested.emit(_current_project(), e)
 
 
 func _show_action(text: String, path: String) -> void:

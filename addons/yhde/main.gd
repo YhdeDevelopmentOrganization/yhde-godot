@@ -183,8 +183,8 @@ func enter() -> void:
 		if url != "":
 			DisplayServer.clipboard_set(url)
 			_toast("Invite link copied. Send it to your teammate: it works for 7 days, 5 downloads.", 0))
-	panel.invite_requested.connect(func(email: String) -> void: account.invite(email))
-	panel.invite_cancel_requested.connect(func(id: String) -> void: account.cancel_invite(id))
+	panel.invite_requested.connect(func(project_id: String, email: String) -> void: account.invite(project_id, email))
+	panel.invite_cancel_requested.connect(func(project_id: String, id: String) -> void: account.cancel_invite(project_id, id))
 	panel.follow_requested.connect(_toggle_follow)
 	updater = Updater.new()
 	plugin.add_child(updater)

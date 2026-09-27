@@ -19,7 +19,7 @@ Website and docs: https://yhde.frostinteractive.fi
 
 - Godot 4.7 or newer
 - Windows, macOS or Linux
-- A YHDE account. The team owner has a plan, and everyone they invite joins free.
+- A YHDE account. Whoever makes a project has a plan; everyone they invite into it joins free.
 
 ## Install
 
@@ -27,7 +27,7 @@ Website and docs: https://yhde.frostinteractive.fi
 2. In Godot, open **Project > Project Settings > Plugins** and enable **YHDE**.
 3. Open the YHDE dock, sign in, and pick or create a project.
 
-Teammates install the add-on the same way and join with their own account or an invite link.
+Teammates install the add-on the same way and join with their own account. Someone who only wants to watch can open a view link instead.
 
 ## Getting help
 

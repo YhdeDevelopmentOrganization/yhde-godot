@@ -18,11 +18,11 @@ const FILE := "yhde_account.cfg"
 var http_base := ""   # https://yhde.example.com
 var token := ""
 var user := {}        # {id, name, email}
-var team = null       # {id, name, plan, role} or null
+var team = null       # {id, name, plan, role} when you can make projects, else null
 var projects: Array = []
 var loaded := false   # projects fetched at least once since signing in
-# The team as the website's dashboard sees it:
-# members, open invitations, plan and who is connected.
+# What the website's dashboard sees: your plan, and each project's people,
+# invitations and who is connected.
 var dashboard := {}
 
 var _device_code := ""
@@ -112,7 +112,8 @@ func _on_poll() -> void:
 			problem.emit("The sign-in code expired. Press Sign in again.")
 
 
-## Fetches who you are, your team and its projects.
+## Fetches who you are and the projects you can open: yours and the ones
+## you were invited to.
 func refresh() -> void:
 	if token == "" or _refreshing:
 		return
@@ -137,11 +138,20 @@ func refresh() -> void:
 	changed.emit()
 
 
-func is_owner() -> bool:
-	return team is Dictionary and str(team.get("role", "")) in ["owner", "admin"]
+## Whether you can make projects (a beta access code on the website).
+func can_make_projects() -> bool:
+	return dashboard.get("plan") is Dictionary
 
 
-## Makes a project in the team. Returns it (with branchId) or {} on failure.
+## The dashboard's entry for one project: members, invites, your role.
+func project_info(project_id: String) -> Dictionary:
+	for p in dashboard.get("projects", []):
+		if str(p.get("id", "")) == project_id:
+			return p
+	return {}
+
+
+## Makes a project of your own. Returns it (with branchId) or {} on failure.
 func create_project(project_name: String) -> Dictionary:
 	var r := await _request(HTTPClient.METHOD_POST, "/api/team/projects", {"name": project_name}, true)
 	if r.code != 200:
@@ -155,17 +165,18 @@ func create_project(project_name: String) -> Dictionary:
 	return {}
 
 
-## A download link for a teammate (7 days, 5 downloads). "" on failure.
+## A view link for one person to watch the project (7 days). "" on failure.
 func make_link(project_id: String) -> String:
-	var r := await _request(HTTPClient.METHOD_POST, "/api/team/projects/%s/links" % project_id, {"label": "From Godot", "hours": 168, "maxUses": 5}, true)
+	var r := await _request(HTTPClient.METHOD_POST, "/api/team/projects/%s/links" % project_id, {"label": "From Godot", "hours": 168, "maxUses": 1}, true)
 	if r.code != 200:
-		problem.emit(_error_text(r, "Couldn't make an invite link."))
+		problem.emit(_error_text(r, "Couldn't make a view link."))
 		return ""
 	return str(r.data.get("url", ""))
 
 
-func invite(email: String) -> bool:
-	var r := await _request(HTTPClient.METHOD_POST, "/api/team/invites", {"email": email}, true)
+## Invites someone into one of your projects by email.
+func invite(project_id: String, email: String) -> bool:
+	var r := await _request(HTTPClient.METHOD_POST, "/api/team/projects/%s/invites" % project_id, {"email": email}, true)
 	if r.code != 200:
 		problem.emit(_error_text(r, "Couldn't send the invitation."))
 		return false
@@ -174,8 +185,8 @@ func invite(email: String) -> bool:
 	return true
 
 
-func cancel_invite(id: String) -> void:
-	var r := await _request(HTTPClient.METHOD_POST, "/api/team/invites/%s/cancel" % id, {}, true)
+func cancel_invite(project_id: String, id: String) -> void:
+	var r := await _request(HTTPClient.METHOD_POST, "/api/team/projects/%s/invites/%s/cancel" % [project_id, id], {}, true)
 	if r.code != 200:
 		problem.emit(_error_text(r, "Couldn't cancel the invitation."))
 		return
